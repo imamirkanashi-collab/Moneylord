@@ -3,7 +3,7 @@
 <head>
 <!-- ============================================================
 NOTE FOR CLAUDE / نکته برای هوش مصنوعی — خوندن این بخش کافیه، کل فایل رو نگرد
-"دانلود داخلی" / in-app content download / content.zip / background (MANDATORY gate: modal #cdm cannot be closed until installed; size shown via probe()):
+"دانلود داخلی" / in-app content download / content.zip / background (optional first-run content download; update checks are non-blocking):
  • Fixed zip URL (never changes): https://raw.githubusercontent.com/imamirkanashi-collab/Moneylord/main/content.zip
  • Search the single word CONTENT_DOWNLOAD (7 hits). The JS is one block at the END of the last <script>,
    between "CONTENT_DOWNLOAD START" and "CONTENT_DOWNLOAD END". Its header comment explains everything.
@@ -5492,6 +5492,9 @@ return cat[1].split(" ").some(function(w){return w&&(tk.indexOf(w)>=0||tk.indexO
 function catOf(name,type){
 var p=String(name||"").split(/[\/\\]/),file=p.pop().replace(/\.([a-z0-9]+)$/i,""),m=/\.([a-z0-9]+)$/i.exec(name),ext=m?m[1].toLowerCase():"",isI=/^image\//.test(type||"")||/^(png|jpg|jpeg|jfif|bmp|webp|gif|svg|avif)$/.test(ext),kind=kindOf(ext,isI);
 var segs=p.slice().reverse().concat(file),i,j;
+/* A real Background folder is authoritative: every image inside it is a background,
+   regardless of the image filename or any nested folder name. */
+if(isI&&p.some(function(part){var q=fa(part.toLowerCase()).replace(/[\\s_.-]+/g,"");return q==="background"||q==="backgrounds"||q==="bg"||q==="بکگراند"||q==="بکگراندها"||q==="پسزمینه"||q==="پسزمینهها"}))return "bg";
 for(i=0;i<segs.length;i++)for(j=0;j<CATS.length;j++)if((!CATS[j][3]||CATS[j][3]===kind)&&hit(segs[i],CATS[j]))return CATS[j][0];
 if(isI&&bgName(name))return "bg";
 /* unknown folder name -> new category, automatically */
@@ -5637,7 +5640,7 @@ if(!z&&!p){if(mode===2){avTmp="cdCkErr";setTimeout(function(){if(avTmp==="cdCkEr
 if(z){if(!oz)lss("moneylord_cd_tz",z);else if(oz!==z)zc=true}
 if(p){if(p.c.v&&cmpV(p.c.v,curVer())>0)hc=true;if(!oh){if(!hc)lss("moneylord_cd_th",h)}else if(oh!==h)hc=true}
  if(!p&&!zc&&lsg("moneylord_cd_av")==="1"){avUi();return}
- lss("moneylord_cd_zc",zc?"1":"0");lss("moneylord_cd_av",(zc||hc)?"1":"0");avUi();forceUi();
+ lss("moneylord_cd_zc",zc?"1":"0");lss("moneylord_cd_av",(zc||hc)?"1":"0");avUi();
 }).catch(function(){ckBusy=false;if(mode===2){avTmp="cdCkErr";setTimeout(function(){if(avTmp==="cdCkErr"){avTmp="";avUi()}},6000)}else avTmp="";avUi()})}
 /* ---- categories page ---- */
 var catB=document.createElement("button"),catM=document.createElement("div");
@@ -5654,20 +5657,6 @@ catM.querySelector(".done").addEventListener("click",function(){sTick();catClose
 catM.addEventListener("click",function(e){if(e.target===catM)catClose()});
 function catBtn(){catB.textContent=SET.lang=="fa"?"دسته‌بندی محتوا":"Content categories";catB.style.display=st.k==="ok"?"":"none"}
 var _ui=ui;ui=function(){_ui();catBtn()};
-/* ---- FORCED UPDATE: while an update is available (and the device is online) the game is blocked until it is installed ---- */
-var fm=document.createElement("div"),fBusy=0;
-fm.setAttribute("role","alertdialog");fm.className="modal";fm.style.zIndex="100000";fm.style.background="rgba(40,20,6,.94)";
-fm.innerHTML='<div class="sheet"><h2></h2><div class="cdst" style="text-align:center"></div><button class="done" type="button"></button></div>';document.body.appendChild(fm);
-var fH=fm.querySelector("h2"),fS=fm.querySelector(".cdst"),fB=fm.querySelector("button"),fMsg="";
-function forceUi(){
-var need=lsg("moneylord_cd_av")==="1"&&navigator.onLine!==false,fa_=SET.lang=="fa";
-fm.classList.toggle("open",need);if(!need){fBusy=0;fMsg="";return}
-if(fBusy&&!busy&&Date.now()-fBusy>45000){fBusy=0;fMsg=fa_?"آپدیت ناموفق بود. اینترنت را بررسی کن و دوباره امتحان کن.":"Update failed. Check your connection and try again."}
-fH.textContent=fa_?"آپدیت اجباری":"Update required";
-fS.textContent=busy&&st.k==="dl"&&st.tot?nm(Math.floor(st.got/st.tot*100))+"%":fBusy?(fa_?"در حال آپدیت…":"Updating…"):fMsg||(fa_?"برای ادامه بازی باید آپدیت کنی.":"Update the game to keep playing.");
-fB.textContent=fa_?"آپدیت":"Update";fB.disabled=!!fBusy;fB.style.opacity=fBusy?".6":""}
-fB.addEventListener("click",function(){sTick();if(fBusy)return;fBusy=Date.now();fMsg="";if(lsg("moneylord_cd_zc")==="1"||st.k!=="ok"){if(!busy)download()}else htmlUpd();forceUi()});
-setInterval(forceUi,700);setInterval(function(){if(!document.hidden)chk(0)},300000);
 /* ---- wiring ---- */
 var bg=document.createElement("div");bg.id="cdbg";var sc=document.querySelector(".scene");if(sc&&sc.parentNode)sc.parentNode.insertBefore(bg,sc.nextSibling);else document.body.appendChild(bg);
 $("cdbgb").addEventListener("click",function(){sTick();$("cdbm").classList.add("open")});
