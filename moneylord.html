@@ -940,12 +940,10 @@ header,.wallet{box-shadow:0 2px 10px var(--shadow)}
 <div class="hint" data-t="updH"></div>
 <div class="cdst" id="updav" style="display:none"></div>
 <button class="done dv" id="updck" type="button" data-t="cdCk"></button>
-<button class="done dv" id="updp" type="button" data-t="updP"></button>
 <div class="cdst" id="updst"></div>
 <div class="cdbar" id="updbar"><i></i></div>
 <button class="done dv" id="upd" type="button"></button>
 <button class="done dv" id="updr" type="button" data-t="updR" style="display:none"></button>
-<input type="file" id="updf" accept=".html,.htm,text/html" style="display:none">
 <button class="done dv" id="bkpb" type="button" data-t="bpBtn"></button>
 <button class="done dv" id="dv" type="button">Dv</button>
 <button class="done rst" id="reset" type="button"></button>
@@ -1211,6 +1209,8 @@ box-shadow:inset 0 0 0 1.5px #d9a82c,inset 0 2px 3px rgba(255,235,190,.35),0 3px
 <input type="number" id="amt" inputmode="decimal" min="0">
 <div class="seg"><button type="button" id="dadd" data-t="add"></button><button type="button" id="dsub" data-t="sub2"></button><button type="button" id="dset" data-t="setv"></button></div>
 <div id="dvmore"></div><div class="hint" id="dvmsg" style="text-align:center;min-height:1.2em"></div>
+<input type="file" id="updf" accept=".html,.htm,text/html" style="display:none">
+<input type="file" id="updz" accept=".zip,application/zip,application/x-zip-compressed" style="display:none">
 <button class="done" id="dvx" type="button" data-t="close"></button>
 </div>
 </div>
@@ -3200,7 +3200,6 @@ return pump()})})()
 if(e&&e.name==="AbortError"){uBusy=false;uCtl=null;uSet({k:"idle"});return}
 tryNext()})})()})}
 $("upd").addEventListener("click",function(){sTick();uDownload()});
-$("updp").addEventListener("click",function(){$("updf").value="";$("updf").click();sTick()});
 var _alU=applyLang;applyLang=function(){_alU();uUi()};
 uUi();uProbe();
 $("updf").addEventListener("change",function(){
@@ -3559,6 +3558,9 @@ setInterval(function(){if(gdOpen())gdUpdate()},500);
 gdInit();
 /* ---------- Dev menu ---------- */
 var PW="S2FuYXNoaQ==",unlocked=false;
+(function(){var z=document.getElementById("updz");if(!z)return;z.addEventListener("change",function(){var f=this.files&&this.files[0];if(!f)return;dvSay(D("Installing zip…","در حال نصب زیپ…"));
+if(!window.mlZipInstall){dvSay(D("Not ready","آماده نیست"));return}
+window.mlZipInstall(f).then(function(r){dvSay(r>0?D("Installed ✓ · "+r+" files","نصب شد ✓ · "+r+" فایل"):r==-2?D("Busy, try again","مشغول است، دوباره امتحان کن"):D("This zip could not be opened","این زیپ باز نشد"));sTick()})})})();
 function dvRefresh(){$("dvmoney").textContent=nm("$"+f(S.c))}
 function dvShow(){unlocked=true;$("dvlock").style.display=unlocked?"none":"block";$("dvbox").style.display=unlocked?"block":"none";if(unlocked){dvBuild();dvRefresh()}}
 function D(en,fa){return SET.lang=="fa"?fa:en}
@@ -3632,6 +3634,9 @@ g=dvGrid(D("Economy report","گزارش اقتصاد"));
 dvB(g,D("Show report","نمایش گزارش"),function(){dvEco()});
 g=dvGrid(D("Content","محتوا"));
 dvB(g,D("Content categories","دسته‌بندی محتوا"),function(){if(!window.mlCatOpen)return D("Not ready","آماده نیست");var r=window.mlCatOpen();if(typeof r=="string")return r;$("dvm").classList.remove("open")});
+g=dvGrid(D("Update","آپدیت"));
+dvB(g,D("Update with HTML file","آپدیت با فایل HTML"),function(){$("updf").value="";$("updf").click()});
+dvB(g,D("Update with ZIP file","آپدیت با فایل زیپ"),function(){$("updz").value="";$("updz").click()});
 g=dvGrid(D("Save data","داده‌ی ذخیره"));
 dvB(g,D("Export","خروجی"),function(){var j=JSON.stringify({S:S,SET:SET});try{navigator.clipboard.writeText(j);return D("Copied to clipboard","کپی شد")}catch(e){prompt("Save:",j)}});
 dvB(g,D("Import","ورودی"),function(){var v=prompt(D("Paste saved data:","داده‌ی ذخیره را بچسبان:"));if(!v)return;try{var o=JSON.parse(v);if(!o.S||!o.S.l)throw 0;S=o.S;localStorage.setItem("moneylord2",JSON.stringify(o.S));if(o.SET)localStorage.setItem("moneylord_set",JSON.stringify(o.SET));window.removeEventListener("pagehide",saveNow);updReload()}catch(e){return D("Invalid data","داده‌ی نامعتبر")}});
@@ -5590,6 +5595,11 @@ if(!files.length)throw new Error("empty");
 var sz=files.reduce(function(s,f){return s+f.b.byteLength},0);
 return saveAll(files,{ts:Date.now(),n:files.length,sz:sz,zip:buf.byteLength}).then(function(){cache=files;setBgOn(1);applyBg();set({k:"ok",n:files.length,sz:sz});if(window.sBuy)sBuy();var m=$("cdm");if(m)setTimeout(function(){m.classList.remove("open")},900);lss("moneylord_cd_av","0");avUi();if(!nohtml)htmlUpd();return tokHead(URL_ZIP).then(function(z){if(z)lss("moneylord_cd_tz",z)}).catch(function(){})})})
 }).catch(function(e){if(e&&e.name==="AbortError")return restore();set({k:"err"})}).then(function(){busy=false;ctl=null;ui()})}
+/* local zip install (Dv > Update with ZIP file): same install as download(), but from a file the person picks */
+window.mlZipInstall=function(f){if(busy)return Promise.resolve(-2);if(!window.DecompressionStream||!window.indexedDB){set({k:"bad"});return Promise.resolve(-1)}
+busy=true;set({k:"unz",got:f.size});ui();
+return f.arrayBuffer().then(function(buf){return unzip(buf).then(function(files){if(!files.length)throw new Error("empty");var sz=files.reduce(function(a,x){return a+x.b.byteLength},0);
+return saveAll(files,{ts:Date.now(),n:files.length,sz:sz,zip:buf.byteLength}).then(function(){cache=files;setBgOn(1);applyBg();set({k:"ok",n:files.length,sz:sz});if(window.sBuy)sBuy();var m=$("cdm");if(m)m.classList.remove("open");lss("moneylord_cd_av","0");avUi();return files.length})})}).catch(function(){restore();return -1}).then(function(r){busy=false;ctl=null;ui();return r})};
 /* ZIP_SYNC: every HTML update path (Download update / pick file / auto) first refreshes content.zip when it changed on the server, so new backgrounds etc. arrive WITH the update. Never blocks: any failure just continues. */
 window.MLZipSync=function(){return new Promise(function(done){
 if(busy||!window.fetch||!window.DecompressionStream||!window.indexedDB){done();return}
