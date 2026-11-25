@@ -5403,7 +5403,10 @@ var _al=applyLang;applyLang=function(){_al();ui()};
 var URL_ZIP="https://raw.githubusercontent.com/imamirkanashi-collab/Moneylord/main/content.zip";
 var MANIFEST=[
  {match:/night|dark/i,type:"bg",theme:"dark"},
- {match:/bg|back|background|day|light/i,type:"bg",theme:"light"}
+ {match:/bg|back|background|day|light/i,type:"bg",theme:"light"},
+ /* God's Hand icon: icons/Godshand.png (found automatically; case, folder, spaces/_/-/apostrophe ignored) -> floating button + its window header */
+ {match:/(^|\/)god['’]?s?[\s_.\-'’]*hand[^\/]*\.(png|webp|jpe?g|gif|svg|avif)$/i,type:"img",target:"#ghb>span",icon:"1.6em"},
+ {match:/(^|\/)god['’]?s?[\s_.\-'’]*hand[^\/]*\.(png|webp|jpe?g|gif|svg|avif)$/i,type:"img",target:"#ghm .shtop>div:first-child",icon:"1em"}
 ];
 var DB="moneylord_content",ASK="moneylord_cd_ask";
 var busy=false,ctl=null,st={k:"none",p:0,got:0,tot:0,n:0,sz:0,pz:0,pk:0},bgUrl=null;
@@ -5521,7 +5524,15 @@ var sel=bgSel();if(sel){var sc2=null;for(i=0;i<cache.length;i++)if(cache[i].n===
 if(!bgOn())f=null;
 if(!f){el.classList.remove("on");el.style.backgroundImage="";document.body.classList.remove("hascd")}
 else{var u=urlOf(f),im=new Image();im.onload=function(){if(!bgOn())return;el.style.backgroundImage='url("'+u+'")';el.classList.add("on");document.body.classList.add("hascd")};im.src=u}
-MANIFEST.forEach(function(m){if(m.type!=="img"||!m.target)return;var c=find(m),n=document.querySelector(m.target);if(!c||!n)return;if(n.tagName==="IMG")n.src=urlOf(c);else n.style.backgroundImage='url("'+urlOf(c)+'")'})}
+MANIFEST.forEach(function(m){if(m.type!=="img"||!m.target)return;var c=find(m),n=document.querySelector(m.target);if(!n)return;if(m.icon){mlIcon(n,c&&isImg(c)?urlOf(c):"",m.icon);return}if(!c)return;if(n.tagName==="IMG")n.src=urlOf(c);else n.style.backgroundImage='url("'+urlOf(c)+'")'})}
+/* icon:"size" in a MANIFEST img entry = replace the element's content (emoji) with the downloaded image; if the file is missing/removed the original emoji comes back */
+function mlIcon(n,u,sz){
+if(n.dataset.mlo===undefined)n.dataset.mlo=n.textContent;
+var im=n.querySelector("img.mlic");
+if(!u){if(im)n.textContent=n.dataset.mlo;return}
+if(!im){n.textContent="";im=document.createElement("img");im.className="mlic";im.alt="";im.draggable=false;n.appendChild(im)}
+im.style.cssText="display:block;width:"+sz+";height:"+sz+";object-fit:contain;pointer-events:none;-webkit-user-drag:none";
+if(im.getAttribute("src")!==u)im.src=u}
 /* ---- UI ---- */
 function mb(b){return nm((b/1048576).toFixed(b<1048576*10?1:0))+(SET.lang=="fa"?" مگابایت":" MB")}
 function ui(){
@@ -5576,7 +5587,7 @@ function restore(){return loadMeta().then(function(m){if(m)set({k:"ok",n:m.n,sz:
 function remove(){clearAll().catch(function(){}).then(function(){cache.forEach(function(f){if(f.u)URL.revokeObjectURL(f.u)});cache=[];applyBg();set({k:"none"})})}
 /* ---- HTML UPDATE NEXT TO content.zip: after the zip is downloaded, the same folder/link is checked for a game .html (index.html or moneylord.html).
    If found, it is installed automatically (exactly like Settings > "Import by HTML"). Applied only once per different file; any failure is ignored silently. ---- */
-var ML_VER=80;window.ML_VER=ML_VER;
+var ML_VER=81;window.ML_VER=ML_VER;
 /* ANY .html in the repo whose NAME contains "moneylord" (any text before/after, any case, e.g. moneylord_v76.html, MoneyLord-v76 (1).html) is an update.
    Highest version number in the name wins (v76 > v75). Listing: GitHub API, fallback jsDelivr, last fallback index.html / moneylord.html. */
 var RAW_DIR=URL_ZIP.replace(/[^\/]*$/,"");
